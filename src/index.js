@@ -37,7 +37,7 @@ var _isConstrutor = _interopRequireDefault(require("./helpers/isConstrutor"));
 
 var cwd = process.cwd();
 
-var mapRoutes = function mapRoutes(routes, pathToController, options = {}) {
+var mapRoutes = function mapRoutes(routes, pathToController, middlewareGenerals = [], options = {}) {
   var middlewareGenerals = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
 
   var router = _express.default.Router();
