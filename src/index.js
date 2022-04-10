@@ -1,72 +1,101 @@
-import entries from 'object.entries';
-import {
-  isString,
-} from 'util';
-import express from 'express';
-import path from 'path';
+"use strict";
 
-import splitByLastDot from './helpers/splitByLastDot';
-import isConstructor from './helpers/isConstrutor';
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
 
-const cwd = process.cwd();
+require("core-js/modules/es6.object.define-property");
 
-const mapRoutes = (routes, pathToController, middlewareGenerals = []) => {
-  const router = express.Router();
-  let requestMethodPath;
-  let requestMethod;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
 
-  let controllerMethod;
-  let controller;
-  let contr;
+require("core-js/modules/es6.array.filter");
 
-  let handler;
+require("core-js/modules/es6.regexp.split");
 
-  let myPath;
-  const myPathToController = path.join(cwd, pathToController);
+require("core-js/modules/es6.regexp.replace");
 
-  const routesArr = entries(routes);
+var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/toConsumableArray"));
 
-  routesArr.forEach((value) => {
-    let middlewares;
-    // to let use an array or only one function as general middlewares
+require("core-js/modules/es6.array.is-array");
+
+require("core-js/modules/web.dom.iterable");
+
+require("core-js/modules/es6.array.for-each");
+
+var _object = _interopRequireDefault(require("object.entries"));
+
+var _util = require("util");
+
+var _express = _interopRequireDefault(require("express"));
+
+var _path = _interopRequireDefault(require("path"));
+
+var _splitByLastDot = _interopRequireDefault(require("./helpers/splitByLastDot"));
+
+var _isConstrutor = _interopRequireDefault(require("./helpers/isConstrutor"));
+
+var cwd = process.cwd();
+
+var mapRoutes = function mapRoutes(routes, pathToController, options = {}) {
+  var middlewareGenerals = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+
+  var router = _express.default.Router();
+
+  var requestMethodPath;
+  var requestMethod;
+  var controllerMethod;
+  var controllerHandler;
+  var controller;
+  var contr;
+  var handler;
+  var myPath;
+
+  var myPathToController = _path.default.join(cwd, pathToController);
+
+  var routesArr = (0, _object.default)(routes);
+  routesArr.forEach(function (value) {
+    var middlewares; // to let use an array or only one function as general middlewares
+
     if (Array.isArray(middlewareGenerals)) {
-      middlewares = [...middlewareGenerals];
+      middlewares = (0, _toConsumableArray2.default)(middlewareGenerals);
     } else if (typeof middlewareGenerals === 'function') {
       middlewares = [middlewareGenerals];
     } else {
       middlewares = [];
     }
+
     requestMethodPath = value[0].replace(/\s\s+/g, ' ');
     requestMethod = requestMethodPath.split(' ')[0].toLocaleLowerCase();
     myPath = requestMethodPath.split(' ')[1];
 
-    if (isString(value[1])) {
-      controller = splitByLastDot(value[1])[0];
-      controllerMethod = splitByLastDot(value[1])[1];
+    if ((0, _util.isString)(value[1])) {
+      controller = (0, _splitByLastDot.default)(value[1])[0];
+      controllerMethod = (0, _splitByLastDot.default)(value[1])[1];
     } else {
       // contains middlewares and other configuration
-      const props = value[1];
+      var props = value[1]; // Extract controller paths
 
-      // Extract controller paths
       if (props.path !== undefined) {
-        controller = splitByLastDot(props.path)[0];
-        controllerMethod = splitByLastDot(props.path)[1];
-      }
+        controller = (0, _splitByLastDot.default)(props.path)[0];
+        controllerMethod = (0, _splitByLastDot.default)(props.path)[1];
+      } // Extract middlewares.
 
-      // Extract middlewares.
-      if (
-        props.middlewares !== undefined &&
-        Array.isArray(props.middlewares)
-      ) {
-        middlewares.push(...props.middlewares);
+
+      if (props.middlewares !== undefined && Array.isArray(props.middlewares)) {
+        var _middlewares;
+
+        (_middlewares = middlewares).push.apply(_middlewares, (0, _toConsumableArray2.default)(props.middlewares));
       }
     }
-    middlewares = middlewares.filter(el => el != null);
+
+    middlewares = middlewares.filter(function (el) {
+      return el != null;
+    });
 
     try {
-      handler = require(`${myPathToController}${controller}`);
-
-      const isConstructable = isConstructor(handler);
+      handler = require("".concat(myPathToController).concat(controller));
+      var isConstructable = (0, _isConstrutor.default)(handler);
 
       if (isConstructable) {
         contr = new handler();
@@ -75,14 +104,22 @@ const mapRoutes = (routes, pathToController, middlewareGenerals = []) => {
       }
     } catch (err) {
       require('@babel/register');
-      handler = require(`${myPathToController}${controller}`).default;
+
+      handler = require("".concat(myPathToController).concat(controller)).default;
       contr = new handler();
     }
 
-    router.route(myPath)[requestMethod](middlewares, contr[controllerMethod]);
-  });
+    controllerHandler = contr[controllerMethod];
 
+    if (options.controllerMethodWrapper) {
+      controllerHandler = options.controllerMethodWrapper(controllerHandler);
+    }
+
+    router.route(myPath)[requestMethod](middlewares, controllerHandler);
+  });
   return router;
 };
 
-export default mapRoutes;
+var _default = mapRoutes;
+exports.default = _default;
+module.exports = exports.default;
